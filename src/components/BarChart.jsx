@@ -7,7 +7,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import carWashData from './Data.json';
+import carWashData from './Data';
 
 const CarWashSalesChart = () => {
   // View state management

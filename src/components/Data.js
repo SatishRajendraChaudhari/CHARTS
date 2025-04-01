@@ -1,5 +1,5 @@
-{
-    "yearlyData": {
+const carWashData = {
+    yearlyData : {
       "2024": {
         "months": {
           "January": {
@@ -703,3 +703,5 @@
       }
     }
   }
+
+  export default carWashData;

@@ -10,7 +10,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 // Import your JSON data (adjust path as needed)
-import yearlyData from './Data.json';
+import yearlyData from './Data';
 
 export default function SalesPieChart() {
   const [viewLevel, setViewLevel] = React.useState('yearly');
@@ -183,4 +183,3 @@ export default function SalesPieChart() {
     </Box>
   );
 }
-//1. if i select any particular month it won't showing me that month pie chart instead of that it showing me the No data to display and undefined Sales by Week
