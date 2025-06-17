@@ -114,7 +114,7 @@ const CarWashSalesChart = () => {
   const { series, xAxis, title } = getChartData();
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '80%', marginLeft:"10%",}}>
       <Typography variant="h5" gutterBottom>
         {title}
       </Typography>
@@ -175,7 +175,7 @@ const CarWashSalesChart = () => {
           categoryGapRatio: viewLevel === 'week' ? 0.5 : 0.2,
           barGapRatio: 0.1
         }]}
-        yAxis={[{ label: 'Sales ($)' }]}
+        yAxis={[{ label: 'Sales ($)' , }]}
         tooltip={{ trigger: 'item' }}
         slotProps={{
           legend: {
@@ -190,3 +190,5 @@ const CarWashSalesChart = () => {
 };
 
 export default CarWashSalesChart;
+
+// inside this component i want to give the margin to the yAxis={[{ label: 'Sales ($)' }]} from the prices and other things how can i do that 
