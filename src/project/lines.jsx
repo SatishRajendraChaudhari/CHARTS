@@ -1,202 +1,188 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { yearlyData, getMonthNames, getDaysForMonth } from './data';
+import { Box, Button } from '@mui/material';
+import { chartData } from './data';
 
-export default function CustomLineChart() {
-  const allMonths = getMonthNames();
-  
-  // State for each dropdown
-  const [selectedYear, setSelectedYear] = React.useState('2024');
-  const [selectedSixMonths, setSelectedSixMonths] = React.useState(['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
-  const [selectedThreeMonths, setSelectedThreeMonths] = React.useState(['Oct', 'Nov', 'Dec']);
-  const [selectedOneMonth, setSelectedOneMonth] = React.useState('Dec');
-  
-  // State to track which view is active
-  const [activeView, setActiveView] = React.useState('12m');
+const buttonOrder = ['12 Months', '6 Months', '30 Days', '7 Days'];
 
-  // Prepare chart data based on active view
-  const prepareChartData = () => {
-    switch (activeView) {
-      case '12m':
-        return {
-          xAxis: allMonths,
-          series: [{
-            data: allMonths.map(month => yearlyData.months[month].monthlyTotal),
-          }],
-          label: 'Monthly Totals'
-        };
-      case '6m':
-        return {
-          xAxis: selectedSixMonths,
-          series: [{
-            data: selectedSixMonths.map(month => yearlyData.months[month].monthlyTotal),
-          }],
-          label: '6 Month Totals'
-        };
-      case '3m':
-        return {
-          xAxis: selectedThreeMonths,
-          series: [{
-            data: selectedThreeMonths.map(month => yearlyData.months[month].monthlyTotal),
-          }],
-          label: '3 Month Totals'
-        };
-      case '1m':
-        const daysData = getDaysForMonth(selectedOneMonth);
-        return {
-          xAxis: daysData.map(item => `${selectedOneMonth} ${item.day}`),
-          series: [{
-            data: daysData.map(item => item.value),
-          }],
-          label: 'Daily Values'
-        };
-      default:
-        return { xAxis: [], series: [], label: '' };
+const LineChartComponent = () => {
+  const [timeRange, setTimeRange] = useState(buttonOrder[0]);
+  const data = chartData[timeRange];
+
+  const waveData = data.values.map((value, index) =>
+    value + (data.wavePattern[index] * (value * 0.015)));
+
+  // Custom label formatting function
+  const formatXAxisLabel = (value) => {
+    if (timeRange === '30 Days') {
+      return value.split(' ')[1];
     }
+    return value;
   };
 
-  const chartData = prepareChartData();
+  // Function to get the full year for a given short year (e.g., '23' -> 2023)
+  const getFullYear = (shortYear) => {
+    const currentYear = new Date().getFullYear(); // e.g., 2025
+    const prefix = Math.floor(currentYear / 100); // e.g., 20
+    const fullYear = parseInt(`${prefix}${shortYear}`, 10);
 
-  // Handle 6 month selection (showing months in descending order)
-  const handleSixMonthChange = (startMonth) => {
-    const startIndex = allMonths.indexOf(startMonth);
-    const sixMonths = [];
-    for (let i = 0; i < 6; i++) {
-      const index = (startIndex - i + 12) % 12;
-      sixMonths.unshift(allMonths[index]);
+    // Basic heuristic: if the fullYear is much greater than currentYear, it might be 19xx
+    // This is a simple assumption, for robust solution, date parsing is better.
+    if (fullYear > currentYear + 10) { // If '25' in 2024 results in 2025, but '98' in 2024 would be 1998
+      return parseInt(`19${shortYear}`, 10);
     }
-    setSelectedSixMonths(sixMonths);
-    setActiveView('6m');
-  };
-
-  // Handle 3 month selection (showing months in descending order)
-  const handleThreeMonthChange = (startMonth) => {
-    const startIndex = allMonths.indexOf(startMonth);
-    const threeMonths = [];
-    for (let i = 0; i < 3; i++) {
-      const index = (startIndex - i + 12) % 12;
-      threeMonths.unshift(allMonths[index]);
-    }
-    setSelectedThreeMonths(threeMonths);
-    setActiveView('3m');
-  };
-
-  // Handle 1 month selection
-  const handleOneMonthChange = (month) => {
-    setSelectedOneMonth(month);
-    setActiveView('1m');
-  };
-
-  // Helper function to calculate end month for display
-  const getEndMonth = (startMonth, monthsToAdd) => {
-    const startIndex = allMonths.indexOf(startMonth);
-    const endIndex = (startIndex + monthsToAdd) % 12;
-    return allMonths[endIndex];
+    return fullYear;
   };
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Data Visualization - 2024
-      </Typography>
-
-      {/* Four separate dropdowns */}
-      <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap' }}>
-        {/* 12 Months Dropdown */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>12 Months</InputLabel>
-          <Select
-            value={selectedYear}
-            label="12 Months"
-            onChange={(e) => {
-              setSelectedYear(e.target.value);
-              setActiveView('12m');
+    <>
+      <Box
+        sx={{
+          mb: 3,
+          display: 'flex',
+          justifyContent: 'flex-start',
+          gap: 1,
+          width: 'auto'
+        }}
+      >
+        {buttonOrder.map((range) => (
+          <Button
+            key={range}
+            onClick={() => setTimeRange(range)}
+            sx={{
+              textTransform: 'none',
+              fontSize: '13px',
+              fontWeight: timeRange === range ? '600' : '400',
+              backgroundColor: timeRange === range ? 'darkblue' : 'transparent',
+              color: timeRange === range ? 'white' : 'text.secondary',
+              borderBottom: 'none',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              '&:hover': {
+                backgroundColor: timeRange === range ? 'darkblue' : 'rgba(25, 118, 210, 0.04)',
+                color: timeRange === range ? 'white' : 'text.secondary',
+              }
             }}
           >
-            <MenuItem value="2024">2024</MenuItem>
-          </Select>
-        </FormControl>
+            {range}
+          </Button>
+        ))}
+      </Box>
 
-        {/* 6 Months Dropdown */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>6 Months</InputLabel>
-          <Select
-            value={selectedSixMonths[5] || ''}
-            label="6 Months"
-            onChange={(e) => handleSixMonthChange(e.target.value)}
-          >
-            {allMonths.map((month) => (
-              <MenuItem key={`6m-${month}`} value={month}>
-                {`${month} to ${getEndMonth(month, 7)}`}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* 3 Months Dropdown */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>3 Months</InputLabel>
-          <Select
-            value={selectedThreeMonths[2] || ''}
-            label="3 Months"
-            onChange={(e) => handleThreeMonthChange(e.target.value)}
-          >
-            {allMonths.map((month) => (
-              <MenuItem key={`3m-${month}`} value={month}>
-                {`${month} to ${getEndMonth(month, 10)}`}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* 1 Month Dropdown */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>1 Month</InputLabel>
-          <Select
-            value={selectedOneMonth}
-            label="1 Month"
-            onChange={(e) => handleOneMonthChange(e.target.value)}
-          >
-            {allMonths.map((month) => (
-              <MenuItem key={`1m-${month}`} value={month}>{month}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {/* Line Chart */}
-      {chartData.xAxis.length > 0 && (
+      <Box>
         <LineChart
-          xAxis={[{
-            data: chartData.xAxis,
-            scaleType: activeView === '1m' ? 'point' : 'band',
-            label: activeView === '1m' ? 'Day' : 'Month'
+          height={600}
+          width={900}
+          series={[{
+            data: waveData,
+            area: true,
+            showMark: ({ index }) => index === waveData.length - 1,
+            color: '#1976d2',
+            curve: 'natural',
           }]}
-          series={[
-            {
-              data: chartData.series[0].data,
-              label: chartData.label,
-              showMark: ({ index }) => index % (activeView === '1m' ? 3 : 1) === 0
-            }
-          ]}
-          height={400}
-          margin={{ left: 70, right: 20 }}
-        />
-      )}
+          xAxis={[{
+            data: data.labels,
+            scaleType: 'point',
+            tickLabelStyle: {
+              fontSize: 11,
+              fill: '#666',
+            },
+            tickInterval: timeRange === '30 Days' ? undefined : undefined,
+            valueFormatter: formatXAxisLabel
+          }]}
+          yAxis={[{ tickLabelStyle: { display: 'none' } }]}
+          slotProps={{
+            tooltip: {
+              // *** REVISED TOOLTIP FORMATTER ***
+              formatter: (params) => {
+                const dataIndex = params[0]?.dataIndex;
+                if (dataIndex === undefined) {
+                  return 'N/A';
+                }
 
-      <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-        {activeView === '12m' && 'Showing all 12 months of 2024'}
-        {activeView === '6m' && `Showing last 6 months: ${selectedSixMonths.join(' → ')}`}
-        {activeView === '3m' && `Showing last 3 months: ${selectedThreeMonths.join(' → ')}`}
-        {activeView === '1m' && `Showing daily data for ${selectedOneMonth} 2024`}
-      </Typography>
-    </Box>
+                const label = data.labels[dataIndex];
+                const value = data.values[dataIndex];
+                let formattedDate = '';
+
+                if (timeRange === '30 Days' || timeRange === '7 Days') {
+                  // For daily/weekly views, the label is like 'May 1' or 'Mon 26'
+                  // The data.tooltips array for these already has the full date including year
+                  // So we can directly use it, as long as it's consistently correct.
+                  // We'll trust the data.tooltips for these ranges for now.
+                   return data.tooltips[dataIndex];
+                } else {
+                  // For '12 Months' and '6 Months', labels are like 'Jun 24'
+                  const parts = label.split(' '); // e.g., ['Jun', '24']
+                  if (parts.length === 2) {
+                    const monthAbbr = parts[0];
+                    const shortYear = parts[1];
+                    const fullYear = getFullYear(shortYear); // Get 2023, 2024 etc.
+
+                    // Map abbreviated month to full month name (for consistency)
+                    const monthMap = {
+                      'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+                      'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+                      'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+                    };
+                    const fullMonth = monthMap[monthAbbr];
+
+                    if (fullMonth && fullYear) {
+                      formattedDate = `${fullMonth} ${fullYear}`;
+                    } else {
+                      formattedDate = label; // Fallback to original label if parsing fails
+                    }
+                  } else {
+                    formattedDate = label; // Fallback to original label
+                  }
+                }
+
+                // Format the number with commas for readability
+                const formattedValue = value.toLocaleString();
+
+                return `${formattedDate}: ${formattedValue}`;
+              }
+            }
+          }}
+          sx={{
+            '& .MuiChartsAxis-directionX': {
+              opacity: 1,
+              '& .MuiChartsAxis-tickLabel': {
+                transform: timeRange === '30 Days' ? 'rotate(-45deg)' : 'none',
+                textAnchor: timeRange === '30 Days' ? 'end' : 'middle'
+              }
+            },
+            '& .MuiChartsAxis-directionY': { opacity: 0 },
+            '& .MuiMarkElement-root': {
+              fill: '#1976d2',
+              stroke: 'white',
+              strokeWidth: 2,
+            },
+            '& .MuiAreaElement-root': {
+              fill: 'url(#areaGradient)',
+            },
+            '& .MuiLineElement-root': {
+              strokeWidth: 2.5,
+              strokeLinecap: 'round',
+            },
+          }}
+          grid={{ horizontal: true }}
+          margin={{
+            top: 10,
+            bottom: timeRange === '30 Days' ? 80 : 40,
+            left: 20,
+            right: 20
+          }}
+        >
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1976d2" stopOpacity={0.3}/>
+              <stop offset="100%" stopColor="#1976d2" stopOpacity={0.3}/>
+            </linearGradient>
+          </defs>
+        </LineChart>
+      </Box>
+    </>
   );
-}
+};
+
+export default LineChartComponent;
